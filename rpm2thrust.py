@@ -2,6 +2,8 @@ import scipy as sp
 import numpy as np
 import argparse
 import matplotlib.pyplot as plt
+import cvxpy as cp
+
 from numpy.polynomial import Polynomial as poly
 from numpy.polynomial.polynomial import Polynomial
 def loadFile(filename):
@@ -50,18 +52,16 @@ if __name__ == '__main__':
     ax[1].plot(rpm, thrust, label='data')
     ax[1].set_xlabel('rpm')
     ax[1].set_ylabel('thrust [g]')
-    # ax[1].legend()
-    # ax[1].grid(True)
 
-    # rpmvsthrust1 = Polynomial.fit(m1, thrust, 2)
-    rpmvsthrust2 = np.polyfit(rpm, thrust, deg=2)
-    print(rpmvsthrust2)
-    # print(rpmvsthrust1.coef,'\n', rpmvsthrust2)
-    # exit()
-    # rpmvsthEval1 = np.polyval(rpmvsthrust1.coef, rpm)
-    rpmvsthEval2 = np.polyval(rpmvsthrust2, rpm)
+    # fit a function (rpm -> thrust)
+    kw = cp.Variable()
+    cost = cp.sum_squares(thrust - kw * rpm**2)
+    prob = cp.Problem(cp.Minimize(cost), [])
+    prob.solve()
+    print(kw.value)
 
-    ax[1].plot(rpm, rpmvsthEval2, label='fit')
+    fitted = kw.value * rpm**2
+    ax[1].plot(rpm, fitted, label='fit')
     # ax[2].set_xlabel('rpm')
     # ax[2].set_ylabel('fitted thrust [g]')
     ax[1].legend()

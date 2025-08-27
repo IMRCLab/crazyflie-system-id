@@ -36,16 +36,33 @@ if __name__ == '__main__':
     pwr = data[:, 9]        # Power in watts
 
     pwm_normalized = pwm / 65535.0
+    vbat_normalized = vbat / 4.2
     import cvxpy as cp
 
     a = cp.Variable()
     b = cp.Variable()
-    # pwm = a + b * rpm
-    cost = cp.sum_squares(a + b * rpm - pwm_normalized)
+    c = cp.Variable()
+    # pwm = a + b * rpm + c * rpm^2
+    cost = cp.sum_squares(a + b * rpm + c * rpm**2 - pwm_normalized)
     prob = cp.Problem(cp.Minimize(cost), [])
     prob.solve()
-    print("rpm2pwm: {}".format(a.value))
-    print("rpm2pwm: {}".format(b.value))
+    print("rpm2pwmA: {}".format(a.value))
+    print("rpm2pwmB: {}".format(b.value))
+    print("rpm2pwmC: {}".format(c.value))
+
+    pwm_fitted = a.value + b.value * rpm + c.value * rpm**2
 
     # force -> pwm
     # pwm_normalized = sqrtf(force / kappa_f) * b + a
+
+    fig, ax = plt.subplots(2)
+    ax[0].plot(pwm_normalized)
+    ax[0].plot(pwm_fitted)
+
+    ax[1].scatter(rpm, pwm_normalized, label='data')
+    ax[1].scatter(rpm, pwm_fitted, label='fit')
+
+    ax[1].legend()
+    ax[1].grid(True)
+
+    plt.show()
